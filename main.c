@@ -1,6 +1,7 @@
 #include <SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define WIDTH 1420
 #define HEIGHT 720
@@ -8,6 +9,15 @@
 #define DINO_HEIGHT 50
 #define DINO_JUMP_POWER 36
 #define EARTH_GRAVITY 981
+
+
+typedef struct{
+    double x;//center down of the bulb
+    double y;//center down of the bulb
+    double r;//height of the bulb
+}bulb;
+
+
 
 void SDL_ExitWithError(const char *string);
 void point(SDL_Renderer* r, int x, int y);
@@ -21,25 +31,32 @@ void closeSDL(SDL_Window**w, SDL_Renderer**r);
 void background(SDL_Renderer* r, int red, int green, int blue);
 void drawLandscape(SDL_Renderer* r);
 void drawDino(SDL_Renderer* r, double x, double y);//x and y values relates to the left bottom corner of the "dino"
-void updateDinoPosition(double*x, double*y, double*vy, double*ay, double*jump);
+void updateDinoPosition(double*x, double*y, double*vy, double*ay);
+void drawBulb(SDL_Renderer* r, bulb b);
+void regenerateBulb(bulb*b);
+void incrementBulb(bulb *b, int tc);
 
 int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o main $(sdl2-config --cflags --libs) && ./main
 
 
     SDL_Window *w;//open a window command
     SDL_Renderer *ren;//render creation
-    double dino_jump = 0;//timer for the dino jump
     double d_x = WIDTH/4;
     double d_y = 3*HEIGHT/4;
     double d_vy = 0;//speed
     double d_ay = 0;//acceleration
+
+    bulb b1;
+    b1.x = 450;
+    b1.y = 3*HEIGHT/4;
+    b1.r = 50;
 
     openSDL(WIDTH, HEIGHT, 0, &w, &ren);
 
     /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     SDL_bool program_launched = SDL_TRUE; //SDL_FALSE or SDL_TRUE
 
-    int i = 0;
+    int tick_count = 0;
 
     while(program_launched){//principal loop
         SDL_Event evt;
@@ -47,9 +64,16 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
 
             printf("y:%f\tvy:%f\tay:%f\n", d_y, d_vy, d_ay);
 
+            incrementBulb(&b1, tick_count);
+            updateDinoPosition(&d_x, &d_y, &d_vy, &d_ay);
 
-            updateDinoPosition(&d_x, &d_y, &d_vy, &d_ay, &dino_jump);
+            background(ren, 255, 255, 255);
+            drawBulb(ren, b1);
+
             drawLandscape(ren);
+
+
+
             drawDino(ren, d_x, d_y);
 
             /*color(ren, 255, 0, 0, 255);
@@ -67,7 +91,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
         SDL_RenderPresent(ren);//refresh the render
 
 
-
+        //controls
         while(SDL_PollEvent(&evt)){//reads all the events (mouse moving, key pressed...)        //possible to wait for an event with SDL_WaitEvent
             switch(evt.type){
 
@@ -107,7 +131,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
 
 
     
-
+        tick_count++;
         SDL_Delay(33);//1000/30 = 33 this delay is for 30fps
 
     }
@@ -229,7 +253,6 @@ void background(SDL_Renderer* r, int red, int green, int blue){
 }
 
 void drawLandscape(SDL_Renderer* r){
-    background(r, 255, 255, 255);
     int alpha = 255;
     for(int y = 3*HEIGHT/4 ; y < HEIGHT && alpha > 0; y ++){
         color(r, 255-alpha, 255-alpha, 255-alpha, alpha);
@@ -244,7 +267,7 @@ void drawDino(SDL_Renderer* r, double x, double y){
     rect(r, x, y - DINO_HEIGHT, DINO_WIDTH , DINO_HEIGHT, 1);
 }
 
-void updateDinoPosition(double*x, double*y, double*vy, double*ay, double*jump){
+void updateDinoPosition(double*x, double*y, double*vy, double*ay){
 
     *x = *x;//x doesn't have to change since the background moves, not the dino
 
@@ -262,8 +285,22 @@ void updateDinoPosition(double*x, double*y, double*vy, double*ay, double*jump){
 
 }
 
+void regenerateBulb(bulb*b){
+    srand(time(0));
+    b->x = WIDTH + rand()%WIDTH;
+    b->y = 3*HEIGHT/WIDTH;
+    b->r = rand()%DINO_HEIGHT;
+}
 
+void drawBulb(SDL_Renderer* r, bulb b){//!\ to draw the bulb before the background, otherwise the bulb will be a circle
+    color(r, 255, 0, 0, 255);
+    //for(int i = b.r ; i >= 0 ; i++){
+        circle(r, b.x, b.y, b.r);
+    //}
+}
 
-
+void incrementBulb(bulb *b, int tc){//to upgrade : bulbs will go faster and faster with time
+    b->x -= 4 + 0.001*tc;
+}
 
 
