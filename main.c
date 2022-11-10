@@ -6,7 +6,7 @@
 #define HEIGHT 720
 #define DINO_WIDTH 40
 #define DINO_HEIGHT 50
-#define DINO_JUMP_POWER 100
+#define DINO_JUMP_POWER 36
 #define EARTH_GRAVITY 981
 
 void SDL_ExitWithError(const char *string);
@@ -44,20 +44,18 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
     while(program_launched){//principal loop
         SDL_Event evt;
 
-        //printf("%d\n",dino_jump);
 
-
+            printf("y:%f\tvy:%f\tay:%f\n", d_y, d_vy, d_ay);
 
 
             updateDinoPosition(&d_x, &d_y, &d_vy, &d_ay, &dino_jump);
             drawLandscape(ren);
             drawDino(ren, d_x, d_y);
 
-            color(ren, 255, 0, 0, 255);
-            mark(ren, 80, 160, 5);
+            /*color(ren, 255, 0, 0, 255);
+            mark(ren, 80, 160, 5);*/
 
 
-            //printf("jump : %d\n", dino_jump);
 
 
     
@@ -81,8 +79,8 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
                     switch (evt.key.keysym.sym){//returns the key ('0' ; 'e' ; 'SPACE'...)
 
                         case SDLK_v:
-                            if(dino_jump == 0)//assert the dino isn't already jumping
-                                dino_jump = DINO_JUMP_POWER;
+                            if(d_y >= 3*HEIGHT/4)//assert the dino isn't already jumping
+                                d_ay = -DINO_JUMP_POWER;
                             break;
 
                         case SDLK_ESCAPE:
@@ -248,39 +246,19 @@ void drawDino(SDL_Renderer* r, double x, double y){
 
 void updateDinoPosition(double*x, double*y, double*vy, double*ay, double*jump){
 
-    
-
-/*
-    *vy += *ay;
-    *y += vy;
-*/
-
-
-
-  //  printf("x : %d  y : %d  j : %d\n", *x, *y, *jump);
-        printf("%f  ", *jump);
-
-
     *x = *x;//x doesn't have to change since the background moves, not the dino
-    if(*jump == 0){
-        //printf("de\n");
-        if(*y < 3*HEIGHT/4)//dino is falling
-            (*y)++;
-        else  
-            (*y) = 3*HEIGHT/4; 
+
+
+    *ay += EARTH_GRAVITY/100.0;
+    *vy += *ay;
+    *y += *vy;
+
+    if(*y >= 3*HEIGHT/4){//if the dino is under the ground
+        *y = 3*HEIGHT/4;
+        *vy = 0;
+        *ay = 0;
     }
 
-    if((*jump) > 0){
-        //printf("in\n");
-        (*y)--;
-        (*jump)--;
-    }
-    if(*jump < 0)
-        (*jump) = 0; //avoid bugs
-
-    printf("%f\n", *jump);
-
-   /// printf("x : %d  y : %d  j : %d\n", *x, *y, *jump);
 
 }
 
