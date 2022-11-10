@@ -4,6 +4,10 @@
 
 #define WIDTH 1420
 #define HEIGHT 720
+#define DINO_WIDTH 40
+#define DINO_HEIGHT 50
+#define DINO_JUMP_POWER 100
+#define EARTH_GRAVITY 981
 
 void SDL_ExitWithError(const char *string);
 void point(SDL_Renderer* r, int x, int y);
@@ -16,30 +20,44 @@ void openSDL(int x, int y, int mode, SDL_Window**w, SDL_Renderer**r);
 void closeSDL(SDL_Window**w, SDL_Renderer**r);
 void background(SDL_Renderer* r, int red, int green, int blue);
 void drawLandscape(SDL_Renderer* r);
-void drawDino(SDL_Renderer* r, int x, int y);//x and y values relates to the left bottom corner of the "dino"
+void drawDino(SDL_Renderer* r, double x, double y);//x and y values relates to the left bottom corner of the "dino"
+void updateDinoPosition(double*x, double*y, double*vy, double*ay, double*jump);
 
-int main(int argc, char *argv[]){//compile with     gcc main.c -o main $(sdl2-config --cflags --libs)
+int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o main $(sdl2-config --cflags --libs) && ./main
 
 
     SDL_Window *w;//open a window command
     SDL_Renderer *ren;//render creation
+    double dino_jump = 0;//timer for the dino jump
+    double d_x = WIDTH/4;
+    double d_y = 3*HEIGHT/4;
+    double d_vy = 0;//speed
+    double d_ay = 0;//acceleration
 
     openSDL(WIDTH, HEIGHT, 0, &w, &ren);
 
     /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     SDL_bool program_launched = SDL_TRUE; //SDL_FALSE or SDL_TRUE
 
+    int i = 0;
+
     while(program_launched){//principal loop
         SDL_Event evt;
 
+        //printf("%d\n",dino_jump);
+
+
+
+
+            updateDinoPosition(&d_x, &d_y, &d_vy, &d_ay, &dino_jump);
             drawLandscape(ren);
-            drawDino(ren, 80, 160);
+            drawDino(ren, d_x, d_y);
 
             color(ren, 255, 0, 0, 255);
             mark(ren, 80, 160, 5);
 
 
-
+            //printf("jump : %d\n", dino_jump);
 
 
     
@@ -62,6 +80,10 @@ int main(int argc, char *argv[]){//compile with     gcc main.c -o main $(sdl2-co
                 case SDL_KEYDOWN:                   //SDL_KEYDOWN : hold a key            SDL_KEYUP : release a key
                     switch (evt.key.keysym.sym){//returns the key ('0' ; 'e' ; 'SPACE'...)
 
+                        case SDLK_v:
+                            if(dino_jump == 0)//assert the dino isn't already jumping
+                                dino_jump = DINO_JUMP_POWER;
+                            break;
 
                         case SDLK_ESCAPE:
                             program_launched = SDL_FALSE;//escape the program by pressing esc
@@ -88,6 +110,7 @@ int main(int argc, char *argv[]){//compile with     gcc main.c -o main $(sdl2-co
 
     
 
+        SDL_Delay(33);//1000/30 = 33 this delay is for 30fps
 
     }
 
@@ -218,14 +241,48 @@ void drawLandscape(SDL_Renderer* r){
     
 }
 
-void drawDino(SDL_Renderer* r, int x, int y){
-    int height_dino = 50;
-    int width_dino = 40;
+void drawDino(SDL_Renderer* r, double x, double y){
     color(r, 0, 0, 0, 255);
-    rect(r, x, y - height_dino, width_dino , height_dino, 1);
+    rect(r, x, y - DINO_HEIGHT, DINO_WIDTH , DINO_HEIGHT, 1);
 }
 
+void updateDinoPosition(double*x, double*y, double*vy, double*ay, double*jump){
 
+    
+
+/*
+    *vy += *ay;
+    *y += vy;
+*/
+
+
+
+  //  printf("x : %d  y : %d  j : %d\n", *x, *y, *jump);
+        printf("%f  ", *jump);
+
+
+    *x = *x;//x doesn't have to change since the background moves, not the dino
+    if(*jump == 0){
+        //printf("de\n");
+        if(*y < 3*HEIGHT/4)//dino is falling
+            (*y)++;
+        else  
+            (*y) = 3*HEIGHT/4; 
+    }
+
+    if((*jump) > 0){
+        //printf("in\n");
+        (*y)--;
+        (*jump)--;
+    }
+    if(*jump < 0)
+        (*jump) = 0; //avoid bugs
+
+    printf("%f\n", *jump);
+
+   /// printf("x : %d  y : %d  j : %d\n", *x, *y, *jump);
+
+}
 
 
 
