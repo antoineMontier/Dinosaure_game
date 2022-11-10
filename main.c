@@ -7,8 +7,8 @@
 #define HEIGHT 720
 #define DINO_WIDTH 40
 #define DINO_HEIGHT 50
-#define DINO_JUMP_POWER 36
-#define EARTH_GRAVITY 981
+#define DINO_JUMP_POWER 20
+#define OBSTACLE_SPEED 10
 
 
 typedef struct{
@@ -33,8 +33,7 @@ void drawLandscape(SDL_Renderer* r);
 void drawDino(SDL_Renderer* r, double x, double y);//x and y values relates to the left bottom corner of the "dino"
 void updateDinoPosition(double*x, double*y, double*vy, double*ay);
 void drawBulb(SDL_Renderer* r, bulb b);
-void regenerateBulb(bulb*b);
-void incrementBulb(bulb *b, int tc);
+void moveBulb(bulb *b, int tc);
 
 int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o main $(sdl2-config --cflags --libs) && ./main
 
@@ -44,7 +43,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
     double d_x = WIDTH/4;
     double d_y = 3*HEIGHT/4;
     double d_vy = 0;//speed
-    double d_ay = 0;//acceleration
+    double d_ay = 1;//acceleration
 
     bulb b1;
     b1.x = 450;
@@ -62,9 +61,10 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
         SDL_Event evt;
 
 
-            printf("y:%f\tvy:%f\tay:%f\n", d_y, d_vy, d_ay);
+            printf("dino coordinates       y:%f\tvy:%f\tay:%f\n", d_y, d_vy, d_ay);
+            //printf("bulb coordinates   x :%f\ty:%f\tr:%f\n", b1.x, b1.y, b1.r);
 
-            incrementBulb(&b1, tick_count);
+            moveBulb(&b1, tick_count);
             updateDinoPosition(&d_x, &d_y, &d_vy, &d_ay);
 
             background(ren, 255, 255, 255);
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
 
                         case SDLK_v:
                             if(d_y >= 3*HEIGHT/4)//assert the dino isn't already jumping
-                                d_ay = -DINO_JUMP_POWER;
+                                d_vy = -DINO_JUMP_POWER;
                             break;
 
                         case SDLK_ESCAPE:
@@ -268,28 +268,17 @@ void drawDino(SDL_Renderer* r, double x, double y){
 }
 
 void updateDinoPosition(double*x, double*y, double*vy, double*ay){
-
-    *x = *x;//x doesn't have to change since the background moves, not the dino
-
-
-    *ay += EARTH_GRAVITY/100.0;
-    *vy += *ay;
-    *y += *vy;
+    //x doesn't have to change since the background moves, not the dino
+    *y += (*vy);
+    *vy += (*ay);
 
     if(*y >= 3*HEIGHT/4){//if the dino is under the ground
         *y = 3*HEIGHT/4;
         *vy = 0;
-        *ay = 0;
+        //*ay = 0;
     }
 
 
-}
-
-void regenerateBulb(bulb*b){
-    srand(time(0));
-    b->x = WIDTH + rand()%WIDTH;
-    b->y = 3*HEIGHT/WIDTH;
-    b->r = rand()%DINO_HEIGHT;
 }
 
 void drawBulb(SDL_Renderer* r, bulb b){//!\ to draw the bulb before the background, otherwise the bulb will be a circle
@@ -299,8 +288,15 @@ void drawBulb(SDL_Renderer* r, bulb b){//!\ to draw the bulb before the backgrou
     //}
 }
 
-void incrementBulb(bulb *b, int tc){//to upgrade : bulbs will go faster and faster with time
-    b->x -= 4 + 0.001*tc;
+void moveBulb(bulb *b, int tc){//to upgrade : bulbs will go faster and faster with time
+    if(b->x > 0)
+        b->x -= OBSTACLE_SPEED + 0.001*tc;   //move the bulb to the left
+    else{                           //regenerate the bulb if it's out of the window
+        srand(time(0));
+        b->x = WIDTH + rand()%WIDTH;
+        b->y = 3*HEIGHT/4;
+        b->r = DINO_HEIGHT + rand()%DINO_HEIGHT;
+    }
 }
 
 
