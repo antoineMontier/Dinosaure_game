@@ -340,11 +340,6 @@ void moveBulbs(bulb *bulbs, int tc){//to upgrade : bulbs will go faster and fast
         (bulbs[i].x) -= OBSTACLE_SPEED + 0.01*tc; //move the bulbs
 
 
-
-   /*for(int i = 0 ; i < BULBS_NUMBER ; i++){
-        printf("%d     x : %f ; y : %f ; r = %f\n", i, bulbs[i].x , bulbs[i].y, bulbs[i].r);
-    }*/
-
 }
 
 
