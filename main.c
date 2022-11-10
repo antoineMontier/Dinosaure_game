@@ -9,8 +9,10 @@
 #define DINO_HEIGHT 50
 #define DINO_JUMP_POWER 20
 #define OBSTACLE_SPEED 10
-#define ACCELERATION 1
-#define BULBS_NUMBER 3
+#define ACCELERATION 180
+#define BULBS_NUMBER 4
+#define SUPER_JUMP_TIMER 100
+
 
 
 typedef struct{
@@ -36,6 +38,8 @@ void drawDino(SDL_Renderer* r, double x, double y);//x and y values relates to t
 void updateDinoPosition(double*x, double*y, double*vy, double*ay);
 void drawBulbs(SDL_Renderer* r, bulb *bulb);
 void moveBulbs(bulb *bulb, int tc);
+int distanceBeetweenWithOtherBulbsisLargerThan(bulb b, bulb*bb, unsigned int n);
+void superJumpBar(SDL_Renderer* r, int n);
 
 int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o main $(sdl2-config --cflags --libs) && ./main
 
@@ -45,7 +49,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
     double d_x = WIDTH/4;
     double d_y = 3*HEIGHT/4;
     double d_vy = 0;//speed
-    double d_ay = ACCELERATION;//acceleration
+    double d_ay = ACCELERATION/100.0;//acceleration
 
     bulb* bulbs = malloc(BULBS_NUMBER*sizeof(bulb));//array for the bulbs
 
@@ -65,6 +69,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
     openSDL(WIDTH, HEIGHT, 0, &w, &ren);
     SDL_bool program_launched = SDL_TRUE; //SDL_FALSE or SDL_TRUE
     int tick_count = 0;
+    int super_jump = 0; // 0 if super jump is avaible ; otherwise it's a timer
 
     /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     while(program_launched){//principal loop
@@ -80,6 +85,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
 
             drawLandscape(ren);
 
+            superJumpBar(ren, super_jump);
 
 
             drawDino(ren, d_x, d_y);
@@ -111,8 +117,12 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
                     switch (evt.key.keysym.sym){//returns the key ('0' ; 'e' ; 'SPACE'...)
 
                         case SDLK_v:
-                            if(d_y >= 3*HEIGHT/4)//assert the dino isn't already jumping
+                            if(d_y >= 3*HEIGHT/4 - 0.1*DINO_HEIGHT)//assert the dino isn't already jumping
                                 d_vy = -DINO_JUMP_POWER;
+                            else if(super_jump == 0){
+                                d_vy = -DINO_JUMP_POWER;
+                                super_jump = SUPER_JUMP_TIMER;
+                            }
                             break;
 
                         case SDLK_ESCAPE:
@@ -140,6 +150,8 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
 
     
         tick_count++;
+        if(super_jump)
+            super_jump--;
         SDL_Delay(33);//1000/30 = 33 this delay is for 30fps
 
     }
@@ -330,8 +342,9 @@ void moveBulbs(bulb *bulbs, int tc){//to upgrade : bulbs will go faster and fast
         if(inTheGame[i] == 0){
             do
             {
-                bulbs[i].x = WIDTH + rand() % WIDTH;                               //distance greater than 50 might be enought
-            } while (!distanceBeetweenWithOtherBulbsisLargerThan(bulbs[i], bulbs, 50));
+                bulbs[i].r = DINO_HEIGHT/2 + rand() % DINO_HEIGHT/2;
+                bulbs[i].x = WIDTH + rand() % WIDTH;                               //distance might be enought
+            } while (!distanceBeetweenWithOtherBulbsisLargerThan(bulbs[i], bulbs, DINO_WIDTH*2));
             
         }
     }
@@ -340,6 +353,44 @@ void moveBulbs(bulb *bulbs, int tc){//to upgrade : bulbs will go faster and fast
         (bulbs[i].x) -= OBSTACLE_SPEED + 0.01*tc; //move the bulbs
 
 
+
+   /*for(int i = 0 ; i < BULBS_NUMBER ; i++){
+        printf("%d     x : %f ; y : %f ; r = %f\n", i, bulbs[i].x , bulbs[i].y, bulbs[i].r);
+    }*/
+
 }
+
+void superJumpBar(SDL_Renderer* r, int n){
+    //origin at x = 50 y = 150
+    int x = 50;
+    double pace = SUPER_JUMP_TIMER/100.0; // 100 is the size of the bar;
+    color(r, 200, 200, 200, 255);//background grey
+
+    for(int y = 140 ; y >= 40 ; y--){
+        for(int x = 47 ; x <= 53 ; x++)
+            point(r, x, y);
+    }
+    color(r, 0, 255, 68, 255);//green
+
+    for(int y = 40 ; y <= 140; y++){
+        for(int x = 47 ; x <= 53 ; x++)
+            if(y > n/pace + 40)
+                point(r, x, y);
+    }
+
+    if(n == 0){//display a border if energy full
+        color(r, 0, 133, 31, 255);
+        rect(r, 46, 39, 8, 102, 0);
+    }
+
+}
+
+
+
+
+
+
+
+
 
 
