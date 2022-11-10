@@ -9,6 +9,8 @@
 #define DINO_HEIGHT 50
 #define DINO_JUMP_POWER 20
 #define OBSTACLE_SPEED 10
+#define ACCELERATION 1
+#define BULBS_NUMBER 3
 
 
 typedef struct{
@@ -32,8 +34,8 @@ void background(SDL_Renderer* r, int red, int green, int blue);
 void drawLandscape(SDL_Renderer* r);
 void drawDino(SDL_Renderer* r, double x, double y);//x and y values relates to the left bottom corner of the "dino"
 void updateDinoPosition(double*x, double*y, double*vy, double*ay);
-void drawBulb(SDL_Renderer* r, bulb b);
-void moveBulb(bulb *b, int tc);
+void drawBulbs(SDL_Renderer* r, bulb *bulb);
+void moveBulbs(bulb *bulb, int tc);
 
 int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o main $(sdl2-config --cflags --libs) && ./main
 
@@ -43,32 +45,38 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
     double d_x = WIDTH/4;
     double d_y = 3*HEIGHT/4;
     double d_vy = 0;//speed
-    double d_ay = 1;//acceleration
+    double d_ay = ACCELERATION;//acceleration
 
-    bulb b1;
-    b1.x = 450;
-    b1.y = 3*HEIGHT/4;
-    b1.r = 50;
+    bulb* bulbs = malloc(BULBS_NUMBER*sizeof(bulb));//array for the bulbs
+
+
+    for(int i = 0 ; i < BULBS_NUMBER ; i++){ //initialise like this in order to be regenerated randomly
+        bulbs[i].x = -10 + i*10;
+        bulbs[i].y = 3*HEIGHT/4;
+        bulbs[i].r = 50;
+    }
+
+    /*for(int i = 0 ; i < BULBS_NUMBER ; i++){
+        printf("%d     x : %f ; y : %f ; r = %f\n", i, bulbs[i].x , bulbs[i].y, bulbs[i].r);        //display the bulbs by force
+    }*/
+
+
 
     openSDL(WIDTH, HEIGHT, 0, &w, &ren);
-
-    /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     SDL_bool program_launched = SDL_TRUE; //SDL_FALSE or SDL_TRUE
-
     int tick_count = 0;
 
+    /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     while(program_launched){//principal loop
         SDL_Event evt;
 
+            //printf("dino coordinates       y:%f\tvy:%f\tay:%f\n", d_y, d_vy, d_ay);
 
-            printf("dino coordinates       y:%f\tvy:%f\tay:%f\n", d_y, d_vy, d_ay);
-            //printf("bulb coordinates   x :%f\ty:%f\tr:%f\n", b1.x, b1.y, b1.r);
-
-            moveBulb(&b1, tick_count);
+            moveBulbs(bulbs, tick_count);
             updateDinoPosition(&d_x, &d_y, &d_vy, &d_ay);
 
             background(ren, 255, 255, 255);
-            drawBulb(ren, b1);
+            drawBulbs(ren, bulbs);
 
             drawLandscape(ren);
 
@@ -143,7 +151,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
     SDL_Delay(5000);//waiting delay, in ms*/
     /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
-    
+    free(bulbs);
     closeSDL(&w, &ren);
     printf("closed successfully !\n");
     return 0;
@@ -281,22 +289,62 @@ void updateDinoPosition(double*x, double*y, double*vy, double*ay){
 
 }
 
-void drawBulb(SDL_Renderer* r, bulb b){//!\ to draw the bulb before the background, otherwise the bulb will be a circle
+void drawBulbs(SDL_Renderer* r, bulb *bulb){//!\ to draw the bulb before the background, otherwise the bulb will be a simple circle
     color(r, 255, 0, 0, 255);
-    //for(int i = b.r ; i >= 0 ; i++){
-        circle(r, b.x, b.y, b.r);
-    //}
+    for(int b = 0 ; b < BULBS_NUMBER ; b ++){
+        for(int i = bulb[b].r ; i >= bulb[b].r - 5 ; i--){//thicken the border of the bulb
+            circle(r, bulb[b].x, bulb[b].y, i);
+        }
+    }
 }
 
-void moveBulb(bulb *b, int tc){//to upgrade : bulbs will go faster and faster with time
-    if(b->x > 0)
-        b->x -= OBSTACLE_SPEED + 0.001*tc;   //move the bulb to the left
-    else{                           //regenerate the bulb if it's out of the window
-        srand(time(0));
-        b->x = WIDTH + rand()%WIDTH;
-        b->y = 3*HEIGHT/4;
-        b->r = DINO_HEIGHT + rand()%DINO_HEIGHT;
+int distanceBeetweenWithOtherBulbsisLargerThan(bulb b, bulb*bb, unsigned int n){
+    for(int i = 0 ; i < BULBS_NUMBER ; i++){
+        if(b.x != bb[i].x){//make sure we're not treation acutal bulb
+            if(b.x < bb[i].x && (bb[i].x - bb[i].r - b.x - b.r) < n)
+                return 0;
+            if(b.x > bb[i].x && (b.x - bb[i].r - bb[i].x - b.r) < n)
+                return 0;
+        }
     }
+    return 1;//True
+}
+
+void moveBulbs(bulb *bulbs, int tc){//to upgrade : bulbs will go faster and faster with time
+
+    int *inTheGame = malloc(BULBS_NUMBER*sizeof(int));
+    for(int i = 0 ; i < BULBS_NUMBER ; i++){
+        if(bulbs[i].x + bulbs[i].r < 0)
+            inTheGame[i] = 0;
+        else
+            inTheGame[i] = 1;
+    } 
+
+    //here, the table is 0 if the bulbs has to die
+
+    //let's regenerate every died bulbs :
+
+    srand(time(0));
+
+    for(int i = 0 ; i < BULBS_NUMBER ; i++){
+        if(inTheGame[i] == 0){
+            do
+            {
+                bulbs[i].x = WIDTH + rand() % WIDTH;                               //distance greater than 50 might be enought
+            } while (!distanceBeetweenWithOtherBulbsisLargerThan(bulbs[i], bulbs, 50));
+            
+        }
+    }
+
+    for(int i = 0 ; i < BULBS_NUMBER ; i++)
+        (bulbs[i].x) -= OBSTACLE_SPEED + 0.01*tc; //move the bulbs
+
+
+
+   /*for(int i = 0 ; i < BULBS_NUMBER ; i++){
+        printf("%d     x : %f ; y : %f ; r = %f\n", i, bulbs[i].x , bulbs[i].y, bulbs[i].r);
+    }*/
+
 }
 
 
