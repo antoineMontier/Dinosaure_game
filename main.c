@@ -13,7 +13,7 @@
 #define ACCELERATION 180
 #define BULBS_NUMBER 4
 #define SUPER_JUMP_TIMER 100
-#define FRAMES_PER_SECOND 40
+#define FRAMES_PER_SECOND 36
 #define BUTTON_WIDTH 70
 #define BUTTON_HEIGHT 70
 #define PALETTE 4
@@ -243,7 +243,6 @@ int main(int argc, char *args[]){//compile and execute with     gcc main.c -o ma
         if(super_jump)
             super_jump--;
         SDL_Delay(1000/FRAMES_PER_SECOND);
-
     }
 
 
