@@ -510,10 +510,20 @@ int died(bulb *bulbs, double x, double y){//there's a 1 pixel delta
 }
 
 void printRestartButton(SDL_Renderer* r, Color*c, int p){
-    color(r, c[4*p].r, c[4*p].g, c[4*p].b, 150);
+    color(r, c[4*p].r, c[4*p].g, c[4*p].b, 255);
     rect(r, WIDTH/2 - BUTTON_WIDTH/2, HEIGHT/2 - BUTTON_HEIGHT/2, BUTTON_WIDTH, BUTTON_HEIGHT, 1);
     color(r, 20, 20, 20, 255);
     rect(r, WIDTH/2 - BUTTON_WIDTH/2, HEIGHT/2 - BUTTON_HEIGHT/2, BUTTON_WIDTH, BUTTON_HEIGHT, 0);
+
+    color(r, c[4*p+1].r, c[4*p+1].g, c[4*p+1].b, 255);
+
+    triangle(r  , WIDTH/2 -  BUTTON_WIDTH/2 +  BUTTON_WIDTH/5
+                , HEIGHT/2 - BUTTON_HEIGHT/2 + BUTTON_HEIGHT/5
+                , WIDTH/2 -  BUTTON_WIDTH/2 +  BUTTON_WIDTH/5
+                , HEIGHT/2 - BUTTON_HEIGHT/2 + 4*BUTTON_HEIGHT/5
+                , WIDTH/2 -  BUTTON_WIDTH/2 +  4*BUTTON_WIDTH/5
+                , HEIGHT/2
+                , 1);
 
 }
 
@@ -589,7 +599,7 @@ double max(double a, double b, double c){
 void triangle(SDL_Renderer* r, int x1, int y1, int x2, int y2, int x3, int y3, int filled){
     line(r, x1, y1, x2, y2);
     line(r, x2, y2, x3, y3);
-    line(r, x3, y3, x1, x1);
+    line(r, x3, y3, x1, y1);
     if(filled){
 
         int s_x = min(x1, x2, x3);
