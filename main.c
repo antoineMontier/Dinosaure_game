@@ -7,16 +7,16 @@
 #define WIDTH 1420
 #define HEIGHT 720
 #define DINO_WIDTH 40
-#define DINO_HEIGHT 50
+#define DINO_HEIGHT 40
 #define DINO_JUMP_POWER 20
 #define OBSTACLE_SPEED 10
 #define ACCELERATION 180
 #define BULBS_NUMBER 4
 #define SUPER_JUMP_TIMER 100
 #define FRAMES_PER_SECOND 40
-#define BUTTON_WIDTH 80
-#define BUTTON_HEIGHT 60
-#define PALETTE 3
+#define BUTTON_WIDTH 70
+#define BUTTON_HEIGHT 70
+#define PALETTE 4
 
 
 
@@ -40,7 +40,7 @@ void mark(SDL_Renderer* r, int x, int y, int thickness);
 void line(SDL_Renderer* r, int x1, int y1, int x2, int y2);
 void color(SDL_Renderer* r, int red, int green, int blue, int alpha);
 void rect(SDL_Renderer* r, int x, int y, int height, int width, int filled);
-void circle(SDL_Renderer * r, int centreX, int centreY, int radius);
+void circle(SDL_Renderer * r, int centreX, int centreY, int radius, int filled);
 void openSDL(int x, int y, int mode, SDL_Window**w, SDL_Renderer**r);
 void closeSDL(SDL_Window**w, SDL_Renderer**r);
 void background(SDL_Renderer* r, Color*c, int p);
@@ -57,6 +57,11 @@ void printRestartButton(SDL_Renderer* r, Color*c, int p);
 int rollover(int mx, int my, int x, int y, int w, int h);
 void restartGame(bulb* b, double *x, double *y, double *vy, double *ay, int *tc, int *p);
 void jump(double*y, double*vy, int*sj);
+int inTheTriangle(double x1, double y1, double x2, double y2, double x3, double y3, double a, double b);
+double min(double a, double b, double c);
+double max(double a, double b, double c);
+void triangle(SDL_Renderer* r, int x1, int y1, int x2, int y2, int x3, int y3, int filled);
+void triangle(SDL_Renderer* r, int x1, int y1, int x2, int y2, int x3, int y3, int filled);
 
 
 
@@ -64,59 +69,77 @@ int main(int argc, char *args[]){//compile and execute with     gcc main.c -o ma
 
     Color *colors = malloc(4*PALETTE*sizeof(Color));//store 9*4 colors that behave nicely 4 to 4
 
-    //first palette // blue theme
+    //first palette // Swap sans
 
-    colors[0].r = 9;
-    colors[0].g = 43;
-    colors[0].b = 73;
+    colors[0].r = 15;
+    colors[0].g = 32;
+    colors[0].b = 97;
 
-    colors[1].r = 8;
-    colors[1].g = 34;
-    colors[1].b = 58;
+    colors[1].r = 255;
+    colors[1].g = 255;
+    colors[1].b = 255;
 
-    colors[2].r = 25;
-    colors[2].g = 78;
-    colors[2].b = 125;
+    colors[2].r = 97;
+    colors[2].g = 237;
+    colors[2].b = 228;
 
-    colors[3].r = 43;
-    colors[3].g = 101;
-    colors[3].b = 153;
+    colors[3].r = 42;
+    colors[3].g = 121;
+    colors[3].b = 161;
 
-    //second palette // green theme
+    //second palette //Dark codes
 
-    colors[4].r = 43;
-    colors[4].g = 142;
-    colors[4].b = 0;
+    colors[4].r = 0;
+    colors[4].g = 12;
+    colors[4].b = 67;
 
-    colors[5].r = 27;
-    colors[5].g = 88;
-    colors[5].b = 0;
+    colors[5].r = 25;
+    colors[5].g = 25;
+    colors[5].b = 25;
 
-    colors[6].r = 43;
-    colors[6].g = 142;
-    colors[6].b = 0;
+    colors[6].r = 68;
+    colors[6].g = 68;
+    colors[6].b = 68;
 
-    colors[7].r = 7;
-    colors[7].g = 23;
-    colors[7].b = 0;
+    colors[7].r = 253;
+    colors[7].g = 170;
+    colors[7].b = 50;
 
-    //third palette // red theme
+    //3 // lightaeon #2
 
-    colors[8].r = 97;
-    colors[8].g = 0;
-    colors[8].b = 0;
+    colors[8].r = 242;
+    colors[8].g = 75;
+    colors[8].b = 106;
 
-    colors[9].r = 114;
-    colors[9].g = 0;
-    colors[9].b = 0;
+    colors[9].r = 31;
+    colors[9].g = 49;
+    colors[9].b = 81;
 
-    colors[10].r = 155;
-    colors[10].g = 0;
-    colors[10].b = 0;
+    colors[10].r = 89;
+    colors[10].g = 47;
+    colors[10].b = 239;
 
-    colors[11].r = 182;
-    colors[11].g = 2;
-    colors[11].b = 2;
+    colors[11].r = 114;
+    colors[11].g = 250;
+    colors[11].b = 154;
+
+     //4 palette // Bold decision
+
+    colors[12].r = 232;
+    colors[12].g = 157;
+    colors[12].b = 86;
+
+    colors[13].r = 26;
+    colors[13].g = 58;
+    colors[13].b = 70;
+
+    colors[14].r = 205;
+    colors[14].g = 84;
+    colors[14].b = 29;
+
+    colors[15].r = 115;
+    colors[15].g = 133;
+    colors[15].b = 100;
 
 
 
@@ -282,7 +305,7 @@ void rect(SDL_Renderer* r, int x, int y, int width, int height, int filled){
     }
 }
 
-void circle(SDL_Renderer * r, int cx, int cy, int radius){
+void circle(SDL_Renderer * r, int cx, int cy, int radius, int filled){
    const int diameter = (radius * 2);
 
    int x = (radius - 1);
@@ -314,6 +337,21 @@ void circle(SDL_Renderer * r, int cx, int cy, int radius){
          error += (tx - diameter);
       }
    }
+
+    if(filled){
+        int s_x = cx - radius;
+        int s_y = cy - radius;
+        int f_x = cx + radius;
+        int f_y = cy + radius;
+
+        for(int a = s_x ; a <= f_x ; a++){
+            for(int b = s_y ; b <= f_y ; b++){
+                if(dist(cx, cy, a, b) < radius)
+                    point(r, a, b);
+            }
+        }
+    }
+
 }
 
 void openSDL(int x, int y, int mode, SDL_Window**w, SDL_Renderer**r){
@@ -369,10 +407,10 @@ void updateDinoPosition(double*x, double*y, double*vy, double*ay){
 }
 
 void drawBulbs(SDL_Renderer* r, bulb *bulb, Color*c, int p){//!\ to draw the bulb before the background, otherwise the bulb will be a simple circle
-    color(r, c[4*p+1].r, c[4*p+1].g, c[4*p+1].b, 255);
+    color(r, c[4*p+2].r, c[4*p+2].g, c[4*p+2].b, 255);
     for(int b = 0 ; b < BULBS_NUMBER ; b ++){
         for(int i = bulb[b].r ; i >= bulb[b].r - 5 ; i--){//thicken the border of the bulb
-            circle(r, bulb[b].x, bulb[b].y, i);
+            circle(r, bulb[b].x, bulb[b].y, i, 1);
         }
     }
 }
@@ -472,7 +510,7 @@ int died(bulb *bulbs, double x, double y){//there's a 1 pixel delta
 }
 
 void printRestartButton(SDL_Renderer* r, Color*c, int p){
-    color(r, c[4*p].r, c[4*p].g + 30, c[4*p].b, 150);
+    color(r, c[4*p].r, c[4*p].g, c[4*p].b, 150);
     rect(r, WIDTH/2 - BUTTON_WIDTH/2, HEIGHT/2 - BUTTON_HEIGHT/2, BUTTON_WIDTH, BUTTON_HEIGHT, 1);
     color(r, 20, 20, 20, 255);
     rect(r, WIDTH/2 - BUTTON_WIDTH/2, HEIGHT/2 - BUTTON_HEIGHT/2, BUTTON_WIDTH, BUTTON_HEIGHT, 0);
@@ -486,6 +524,7 @@ int rollover(int mx, int my, int x, int y, int w, int h){
 }
 
 void restartGame(bulb* b, double *x, double *y, double *vy, double *ay, int *tc, int*p){
+    srand(time(0));
     for(int i = 0 ; i < BULBS_NUMBER ; i++){ //initialise like this in order to be regenerated randomly
         b[i].x = -100 + i*10;
         b[i].y = 3*HEIGHT/4;
@@ -510,5 +549,59 @@ void jump(double*y, double*vy, int*sj){
     else if(*sj == 0 && *vy < 3*HEIGHT/4 - 0.1*DINO_HEIGHT){ //assert the dino can double jump and he's already in the air
         *vy = -DINO_JUMP_POWER;
         *sj = SUPER_JUMP_TIMER;
+    }
+}
+
+int inTheTriangle(double x1, double y1, double x2, double y2, double x3, double y3, double a, double b){
+    int sign1 = -1, sign2 = -1, sign3 = -1;
+    if(((x2-x1)*(b-y1) - (y2-y1)*(a-x1)) >= 0)
+        sign1 = 1;
+
+    if(((x3-x2)*(b-y2) - (y3-y2)*(a-x2)) >= 0)
+        sign2 = 1;
+
+    if(((x1-x3)*(b-y3) - (a-x3)*(y1-y3)) >= 0)
+        sign3 = 1;
+
+    if(sign1 == sign2 && sign2 == sign3)
+        return 1;
+    return 0;
+}
+
+double min(double a, double b, double c){
+    if(a < b && a < c)
+        return a;
+    if(b < a && b < c)
+        return b;
+    if(c < a && c < b)
+        return c;
+}
+
+double max(double a, double b, double c){
+    if(a > b && a > c)
+        return a;
+    if(b > a && b > c)
+        return b;
+    if(c > a && c > b)
+        return c;
+}
+
+void triangle(SDL_Renderer* r, int x1, int y1, int x2, int y2, int x3, int y3, int filled){
+    line(r, x1, y1, x2, y2);
+    line(r, x2, y2, x3, y3);
+    line(r, x3, y3, x1, x1);
+    if(filled){
+
+        int s_x = min(x1, x2, x3);
+        int s_y = min(y1, y2, y3);
+        int f_x = max(x1, x2, x3);
+        int f_y = max(y1, y2, y3);
+
+        for(int a = s_x ; a <= f_x ; a++){
+            for(int b = s_y ; b <= f_y ; b++){
+                if(inTheTriangle(x1, y1, x2, y2, x3, y3, a, b))
+                    point(r, a, b);
+            }
+        }
     }
 }
