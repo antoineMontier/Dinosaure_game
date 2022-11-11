@@ -48,29 +48,26 @@ int died(bulb *bulbs, double x, double y);
 double dist(double x1, double y1, double x2, double y2);
 void printRestartButton(SDL_Renderer* r);
 int rollover(int mx, int my, int x, int y, int w, int h);
-void restartGame(bulb* b, double *x, double *y, double *vy, double *ay);
+void restartGame(bulb* b, double *x, double *y, double *vy, double *ay, int *tc);
+void jump(double*y, double*vy, int*sj);
+
+
+
+
+
+
+
+
+
+
 
 int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o main -lm $(sdl2-config --cflags --libs) && ./main
 
     SDL_Window *w;//open a window command
     SDL_Renderer *ren;//render creation
-    double d_x = WIDTH/4;
-    double d_y = 3*HEIGHT/4;
-    double d_vy = 0;//speed
-    double d_ay = ACCELERATION/100.0;//acceleration
+    double d_x, d_y, d_vy, d_ay;
 
     bulb* bulbs = malloc(BULBS_NUMBER*sizeof(bulb));//array for the bulbs
-
-
-    for(int i = 0 ; i < BULBS_NUMBER ; i++){ //initialise like this in order to be regenerated randomly
-        bulbs[i].x = -100 + i*10;
-        bulbs[i].y = 3*HEIGHT/4;
-        bulbs[i].r = 50;
-    }
-
-    /*for(int i = 0 ; i < BULBS_NUMBER ; i++){
-        printf("%d     x : %f ; y : %f ; r = %f\n", i, bulbs[i].x , bulbs[i].y, bulbs[i].r);        //display the bulbs by force
-    }*/
 
 
 
@@ -79,6 +76,10 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
     int tick_count = 0;
     int super_jump = 0; // 0 if super jump is avaible ; otherwise it's a timer
     int survived = 0;
+    int last_survived = 0;
+
+    restartGame(bulbs, &d_x, &d_y, &d_vy, &d_ay, &tick_count);
+
 
     /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     while(program_launched){//principal loop
@@ -105,7 +106,8 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
 
             }else{
                 if(survived){
-                    printf("you survived %d seconds\n", survived/1000);
+                    printf("you survived %d seconds\n", (survived - last_survived)/1000);
+                    last_survived = survived;
                     survived = 0;
                 }
                 printRestartButton(ren);
@@ -125,12 +127,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
                     switch (evt.key.keysym.sym){//returns the key ('0' ; 'e' ; 'SPACE'...)
 
                         case SDLK_v:
-                            if(d_y >= 3*HEIGHT/4 - 0.1*DINO_HEIGHT)//assert the dino isn't already jumping
-                                d_vy = -DINO_JUMP_POWER;
-                            else if(super_jump == 0 && d_y < 3*HEIGHT/4 - 0.1*DINO_HEIGHT){ //assert the dino can double jump and he's already in the air
-                                d_vy = -DINO_JUMP_POWER;
-                                super_jump = SUPER_JUMP_TIMER;
-                            }
+                            jump(&d_y, &d_vy, &super_jump);
                             break;
 
                         case SDLK_ESCAPE:
@@ -147,9 +144,10 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
                     if(!survived){//wait for the rollover only if the game is not running
                         int k = rollover(evt.button.x, evt.button.y, WIDTH/2 - BUTTON_WIDTH/2, HEIGHT/2 - BUTTON_HEIGHT/2, BUTTON_WIDTH, BUTTON_HEIGHT);
                         if(k)
-                            restartGame(bulbs, &d_x, &d_y, &d_vy, &d_ay);
+                            restartGame(bulbs, &d_x, &d_y, &d_vy, &d_ay, &tick_count);
+                    }else   
+                        jump(&d_y, &d_vy, &super_jump);
 
-                    }
 
 
 
@@ -427,6 +425,9 @@ int died(bulb *bulbs, double x, double y){//there's a 1 pixel delta
 void printRestartButton(SDL_Renderer* r){
     color(r, 100, 100, 100, 150);
     rect(r, WIDTH/2 - BUTTON_WIDTH/2, HEIGHT/2 - BUTTON_HEIGHT/2, BUTTON_WIDTH, BUTTON_HEIGHT, 1);
+    color(r, 20, 20, 20, 255);
+    rect(r, WIDTH/2 - BUTTON_WIDTH/2, HEIGHT/2 - BUTTON_HEIGHT/2, BUTTON_WIDTH, BUTTON_HEIGHT, 0);
+
 }
 
 int rollover(int mx, int my, int x, int y, int w, int h){
@@ -435,7 +436,7 @@ int rollover(int mx, int my, int x, int y, int w, int h){
     return 0;//false
 }
 
-void restartGame(bulb* b, double *x, double *y, double *vy, double *ay){
+void restartGame(bulb* b, double *x, double *y, double *vy, double *ay, int *tc){
     for(int i = 0 ; i < BULBS_NUMBER ; i++){ //initialise like this in order to be regenerated randomly
         b[i].x = -100 + i*10;
         b[i].y = 3*HEIGHT/4;
@@ -446,5 +447,14 @@ void restartGame(bulb* b, double *x, double *y, double *vy, double *ay){
     *y = 3*HEIGHT/4;
     *vy = 0;//speed
     *ay = ACCELERATION/100.0;//acceleration
+    *tc = 0; //reset ticks
+}
 
+void jump(double*y, double*vy, int*sj){
+    if(*y >= 3*HEIGHT/4 - 0.1*DINO_HEIGHT)//assert the dino isn't already jumping
+        *vy = -DINO_JUMP_POWER;
+    else if(*sj == 0 && *vy < 3*HEIGHT/4 - 0.1*DINO_HEIGHT){ //assert the dino can double jump and he's already in the air
+        *vy = -DINO_JUMP_POWER;
+        *sj = SUPER_JUMP_TIMER;
+    }
 }
