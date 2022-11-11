@@ -9,7 +9,7 @@
 #define DINO_WIDTH 40
 #define DINO_HEIGHT 40
 #define DINO_JUMP_POWER 20
-#define OBSTACLE_SPEED 10
+#define OBSTACLE_SPEED 15
 #define ACCELERATION 180
 #define BULBS_NUMBER 4
 #define SUPER_JUMP_TIMER 100
@@ -50,7 +50,7 @@ void updateDinoPosition(double*x, double*y, double*vy, double*ay);
 void drawBulbs(SDL_Renderer* r, bulb *bulb, Color*c, int p);
 void moveBulbs(bulb *bulb, int tc);
 int distanceBeetweenWithOtherBulbsisLargerThan(bulb b, bulb*bb, unsigned int n);
-void superJumpBar(SDL_Renderer* r, int n, Color*c, int p);
+void superJumpCircle(SDL_Renderer* r, int n, Color*c, int p);
 int died(bulb *bulbs, double x, double y);
 double dist(double x1, double y1, double x2, double y2);
 void printRestartButton(SDL_Renderer* r, Color*c, int p);
@@ -69,7 +69,7 @@ int main(int argc, char *args[]){//compile and execute with     gcc main.c -o ma
 
     Color *colors = malloc(4*PALETTE*sizeof(Color));//store 9*4 colors that behave nicely 4 to 4
 
-    //first palette // Swap sans
+    //1 // Swap sans
 
     colors[0].r = 15;
     colors[0].g = 32;
@@ -87,7 +87,7 @@ int main(int argc, char *args[]){//compile and execute with     gcc main.c -o ma
     colors[3].g = 121;
     colors[3].b = 161;
 
-    //second palette //Dark codes
+    //2 //Dark codes
 
     colors[4].r = 0;
     colors[4].g = 12;
@@ -123,7 +123,7 @@ int main(int argc, char *args[]){//compile and execute with     gcc main.c -o ma
     colors[11].g = 250;
     colors[11].b = 154;
 
-     //4 palette // Bold decision
+     //4 // Bold decision
 
     colors[12].r = 232;
     colors[12].g = 157;
@@ -173,13 +173,14 @@ int main(int argc, char *args[]){//compile and execute with     gcc main.c -o ma
                 updateDinoPosition(&d_x, &d_y, &d_vy, &d_ay);
 
                 background(ren, colors, palette);
+                superJumpCircle(ren, super_jump, colors, palette);
+
                 drawDino(ren, d_x, d_y, colors, palette, p_y);
 
                 drawBulbs(ren, bulbs, colors, palette);
 
                 drawLandscape(ren, colors, palette);
 
-                superJumpBar(ren, super_jump, colors, palette);
 
 
 
@@ -248,12 +249,6 @@ int main(int argc, char *args[]){//compile and execute with     gcc main.c -o ma
         SDL_Delay(1000/FRAMES_PER_SECOND);
     }
 
-
-
-
-    /*SDL_RenderPresent(ren);//refresh the render
-    SDL_Delay(5000);//waiting delay, in ms*/
-    /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     free(colors);
     free(bulbs);
     closeSDL(&w, &ren);
@@ -390,14 +385,15 @@ void drawLandscape(SDL_Renderer* r, Color*c, int p){
 }
 
 void drawDino(SDL_Renderer* r, double x, double y, Color*c, int p, int yy){
-    color(r, c[4*p].r, c[4*p].g, c[4*p].b, 255);
-    rect(r, x, y - DINO_HEIGHT, DINO_WIDTH , DINO_HEIGHT, 1);
+
     double a = 150;
     for(int u = 0 ; u <= DINO_WIDTH*5 && a > 0; u++){
         color(r, (255 - a)*c[4*p+3].r/255, (255 - a)*c[4*p+3].g/255, (255 - a)*c[4*p+3].b/255, 0);
-        triangle(r, x, y, x, y - DINO_HEIGHT, x-u, yy - DINO_HEIGHT/2, 0);
+        triangle(r, x+1, y, x+1, y - DINO_HEIGHT, x-u, yy - DINO_HEIGHT/2, 0);
         a-= 0.8;
     } 
+    color(r, c[4*p].r, c[4*p].g, c[4*p].b, 255);
+    rect(r, x, y - DINO_HEIGHT, DINO_WIDTH , DINO_HEIGHT, 1);
 
 
 
@@ -468,7 +464,7 @@ void moveBulbs(bulb *bulbs, int tc){//to upgrade : bulbs will go faster and fast
     }
 
     for(int i = 0 ; i < BULBS_NUMBER ; i++)
-        (bulbs[i].x) -= OBSTACLE_SPEED + 0.01*tc; //move the bulbs
+        (bulbs[i].x) -= OBSTACLE_SPEED + 0.003*tc; //move the bulbs
 
 
 
@@ -478,28 +474,32 @@ void moveBulbs(bulb *bulbs, int tc){//to upgrade : bulbs will go faster and fast
 
 }
 
-void superJumpBar(SDL_Renderer* r, int n, Color*c, int p){
+void superJumpCircle(SDL_Renderer* r, int n, Color*c, int p){
     //origin at x = 50 y = 150
-    int x = 50;
-    double pace = SUPER_JUMP_TIMER/100.0; // 100 is the size of the bar;
-    color(r, c[4*p+3].r, c[4*p+3].g, c[4*p+3].b, 255);//background
+    color(r, c[4*p+1].r, c[4*p+1].g, c[4*p+1].b, 255);//circle color
+    circle(r, 50, 50, 20, 1);
 
-    for(int y = 140 ; y >= 40 ; y--){
-        for(int x = 47 ; x <= 53 ; x++)
-            point(r, x, y);
-    }
-
-    color(r, c[4*p+1].r, c[4*p+1].g, c[4*p+1].b, 255);//bar color
-
-
-    for(int y = 40 ; y <= 140; y++){
-        for(int x = 47 ; x <= 53 ; x++)
-            if(y > n/pace + 40)
-                point(r, x, y);
-    }
-
+    if(!n)
+        return;//beautify the circle if it's full
     
 
+    //angle calcul :
+    double a = (SUPER_JUMP_TIMER - n)*2*3.1415/SUPER_JUMP_TIMER - 3.1415*0.5;
+
+    color(r, c[4*p+3].r, c[4*p+3].g, c[4*p+3].b, 255);//background color
+
+    if(a < 0){//4 cases
+        rect(r, 30, 30, 20, 40, 1);
+        rect(r, 50, 50, 20, 20, 1);
+        triangle(r, 50, 50, 100, 50, 50 + 25*cos(a), 50 +25*sin(a), 1);
+    }else if(a < 3.1415*0.5){
+        rect(r, 30, 30, 20, 40, 1);
+        triangle(r, 50, 50, 50, 100, 50 + 25*cos(a), 50 +25*sin(a), 1);
+    }else if(a < 3.1415){
+        rect(r, 30, 30, 20, 20, 1);
+        triangle(r, 50, 50, 0, 50, 50 + 25*cos(a), 50 +25*sin(a), 1);
+    }else
+        triangle(r, 50, 50, 50, 0, 50 + 25*cos(a), 50 +25*sin(a), 1);
 }
 
 double dist(double x1, double y1, double x2, double y2){
