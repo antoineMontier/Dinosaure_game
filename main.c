@@ -14,6 +14,8 @@
 #define BULBS_NUMBER 4
 #define SUPER_JUMP_TIMER 100
 #define FRAMES_PER_SECOND 40
+#define BUTTON_WIDTH 80
+#define BUTTON_HEIGHT 60
 
 
 
@@ -44,9 +46,11 @@ int distanceBeetweenWithOtherBulbsisLargerThan(bulb b, bulb*bb, unsigned int n);
 void superJumpBar(SDL_Renderer* r, int n);
 int died(bulb *bulbs, double x, double y);
 double dist(double x1, double y1, double x2, double y2);
+void printRestartButton(SDL_Renderer* r);
+int rollover(int mx, int my, int x, int y, int w, int h);
+void restartGame(bulb* b, double *x, double *y, double *vy, double *ay);
 
 int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o main -lm $(sdl2-config --cflags --libs) && ./main
-
 
     SDL_Window *w;//open a window command
     SDL_Renderer *ren;//render creation
@@ -59,7 +63,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
 
 
     for(int i = 0 ; i < BULBS_NUMBER ; i++){ //initialise like this in order to be regenerated randomly
-        bulbs[i].x = -10 + i*10;
+        bulbs[i].x = -100 + i*10;
         bulbs[i].y = 3*HEIGHT/4;
         bulbs[i].r = 50;
     }
@@ -74,6 +78,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
     SDL_bool program_launched = SDL_TRUE; //SDL_FALSE or SDL_TRUE
     int tick_count = 0;
     int super_jump = 0; // 0 if super jump is avaible ; otherwise it's a timer
+    int survived = 0;
 
     /*----------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     while(program_launched){//principal loop
@@ -96,17 +101,16 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
 
                 /*color(ren, 255, 0, 0, 255);
                 mark(ren, 80, 160, 5);*/
-
-                SDL_RenderPresent(ren);//refresh the render
+                survived = SDL_GetTicks();
 
             }else{
-                printf("you survived %d seconds\n", SDL_GetTicks()/1000);
-                SDL_Delay(2500);//4 sec to see the score
-                free(bulbs);
-                closeSDL(&w, &ren);
-                printf("closed successfully !\n");
-                return 0;
+                if(survived){
+                    printf("you survived %d seconds\n", survived/1000);
+                    survived = 0;
+                }
+                printRestartButton(ren);
             }
+                SDL_RenderPresent(ren);//refresh the render
 
 
         //controls
@@ -136,6 +140,15 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
 
                         default:
                             break;
+                    }
+
+
+                case SDL_MOUSEBUTTONDOWN:
+                    if(!survived){//wait for the rollover only if the game is not running
+                        int k = rollover(evt.button.x, evt.button.y, WIDTH/2 - BUTTON_WIDTH/2, HEIGHT/2 - BUTTON_HEIGHT/2, BUTTON_WIDTH, BUTTON_HEIGHT);
+                        if(k)
+                            restartGame(bulbs, &d_x, &d_y, &d_vy, &d_ay);
+
                     }
 
 
@@ -376,7 +389,12 @@ void superJumpBar(SDL_Renderer* r, int n){
         for(int x = 47 ; x <= 53 ; x++)
             point(r, x, y);
     }
+
     color(r, 0, 255, 68, 255);//green
+
+    if(n == 0){//changes bar color if energy full
+        color(r, 0, 153, 51, 255);
+    }
 
     for(int y = 40 ; y <= 140; y++){
         for(int x = 47 ; x <= 53 ; x++)
@@ -384,10 +402,7 @@ void superJumpBar(SDL_Renderer* r, int n){
                 point(r, x, y);
     }
 
-    if(n == 0){//display a border if energy full
-        color(r, 0, 133, 31, 255);
-        rect(r, 46, 39, 8, 102, 0);
-    }
+    
 
 }
 
@@ -409,8 +424,27 @@ int died(bulb *bulbs, double x, double y){//there's a 1 pixel delta
     return 0;//no died
 }
 
+void printRestartButton(SDL_Renderer* r){
+    color(r, 100, 100, 100, 150);
+    rect(r, WIDTH/2 - BUTTON_WIDTH/2, HEIGHT/2 - BUTTON_HEIGHT/2, BUTTON_WIDTH, BUTTON_HEIGHT, 1);
+}
 
+int rollover(int mx, int my, int x, int y, int w, int h){
+    if(mx >= x && mx < x + w && my > y && my < y + h)
+        return 1;//true
+    return 0;//false
+}
 
+void restartGame(bulb* b, double *x, double *y, double *vy, double *ay){
+    for(int i = 0 ; i < BULBS_NUMBER ; i++){ //initialise like this in order to be regenerated randomly
+        b[i].x = -100 + i*10;
+        b[i].y = 3*HEIGHT/4;
+        b[i].r = 50;
+    }
 
+    *x = WIDTH/4;
+    *y = 3*HEIGHT/4;
+    *vy = 0;//speed
+    *ay = ACCELERATION/100.0;//acceleration
 
-
+}
