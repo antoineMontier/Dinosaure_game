@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 #define WIDTH 1420
 #define HEIGHT 720
@@ -40,8 +41,10 @@ void drawBulbs(SDL_Renderer* r, bulb *bulb);
 void moveBulbs(bulb *bulb, int tc);
 int distanceBeetweenWithOtherBulbsisLargerThan(bulb b, bulb*bb, unsigned int n);
 void superJumpBar(SDL_Renderer* r, int n);
+int died(bulb *bulbs, double x, double y);
+double dist(double x1, double y1, double x2, double y2);
 
-int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o main $(sdl2-config --cflags --libs) && ./main
+int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o main -lm $(sdl2-config --cflags --libs) && ./main
 
 
     SDL_Window *w;//open a window command
@@ -76,33 +79,26 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
         SDL_Event evt;
 
             //printf("dino coordinates       y:%f\tvy:%f\tay:%f\n", d_y, d_vy, d_ay);
+            if(!died(bulbs, d_x, d_y)){
+                moveBulbs(bulbs, tick_count);
+                updateDinoPosition(&d_x, &d_y, &d_vy, &d_ay);
 
-            moveBulbs(bulbs, tick_count);
-            updateDinoPosition(&d_x, &d_y, &d_vy, &d_ay);
+                background(ren, 255, 255, 255);
+                drawBulbs(ren, bulbs);
 
-            background(ren, 255, 255, 255);
-            drawBulbs(ren, bulbs);
+                drawLandscape(ren);
 
-            drawLandscape(ren);
-
-            superJumpBar(ren, super_jump);
-
-
-            drawDino(ren, d_x, d_y);
-
-            /*color(ren, 255, 0, 0, 255);
-            mark(ren, 80, 160, 5);*/
+                superJumpBar(ren, super_jump);
 
 
+                drawDino(ren, d_x, d_y);
 
+                /*color(ren, 255, 0, 0, 255);
+                mark(ren, 80, 160, 5);*/
 
-    
+                SDL_RenderPresent(ren);//refresh the render
 
-    
-
-
-
-        SDL_RenderPresent(ren);//refresh the render
+            }
 
 
         //controls
@@ -119,7 +115,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
                         case SDLK_v:
                             if(d_y >= 3*HEIGHT/4 - 0.1*DINO_HEIGHT)//assert the dino isn't already jumping
                                 d_vy = -DINO_JUMP_POWER;
-                            else if(super_jump == 0){
+                            else if(super_jump == 0 && d_y < 3*HEIGHT/4 - 0.1*DINO_HEIGHT){ //assert the dino can double jump and he's already in the air
                                 d_vy = -DINO_JUMP_POWER;
                                 super_jump = SUPER_JUMP_TIMER;
                             }
@@ -344,7 +340,7 @@ void moveBulbs(bulb *bulbs, int tc){//to upgrade : bulbs will go faster and fast
             {
                 bulbs[i].r = DINO_HEIGHT/2 + rand() % DINO_HEIGHT/2;
                 bulbs[i].x = WIDTH + rand() % WIDTH;                               //distance might be enought
-            } while (!distanceBeetweenWithOtherBulbsisLargerThan(bulbs[i], bulbs, DINO_WIDTH*2));
+            } while (!distanceBeetweenWithOtherBulbsisLargerThan(bulbs[i], bulbs, DINO_WIDTH*3));
             
         }
     }
@@ -385,9 +381,23 @@ void superJumpBar(SDL_Renderer* r, int n){
 
 }
 
+double dist(double x1, double y1, double x2, double y2){
+    return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+}
 
-
-
+int died(bulb *bulbs, double x, double y){
+    for(int b = 0 ; b < BULBS_NUMBER ; b++){
+        if(dist(x, y, bulbs[b].x, bulbs[b].y) < bulbs[b].r)//left down corner
+            return 1;
+        if(dist(x + DINO_WIDTH, y, bulbs[b].x, bulbs[b].y) < bulbs[b].r)//right down corner
+            return 1;
+        if(dist(x + DINO_WIDTH/3, y, bulbs[b].x, bulbs[b].y) < bulbs[b].r)//1/3
+            return 1;
+        if(dist(x + 2*DINO_WIDTH/3, y, bulbs[b].x, bulbs[b].y) < bulbs[b].r)//2/3
+            return 1;
+    }
+    return 0;//no died
+}
 
 
 
