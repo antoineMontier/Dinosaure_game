@@ -173,6 +173,8 @@ int main(int argc, char *args[]){//compile and execute with     gcc main.c -o ma
                 updateDinoPosition(&d_x, &d_y, &d_vy, &d_ay);
 
                 background(ren, colors, palette);
+                drawDino(ren, d_x, d_y, colors, palette, p_y);
+
                 drawBulbs(ren, bulbs, colors, palette);
 
                 drawLandscape(ren, colors, palette);
@@ -180,7 +182,6 @@ int main(int argc, char *args[]){//compile and execute with     gcc main.c -o ma
                 superJumpBar(ren, super_jump, colors, palette);
 
 
-                drawDino(ren, d_x, d_y, colors, palette, p_y);
 
                 /*color(ren, 255, 0, 0, 255);
                 mark(ren, 80, 160, 5);*/
@@ -391,11 +392,11 @@ void drawLandscape(SDL_Renderer* r, Color*c, int p){
 void drawDino(SDL_Renderer* r, double x, double y, Color*c, int p, int yy){
     color(r, c[4*p].r, c[4*p].g, c[4*p].b, 255);
     rect(r, x, y - DINO_HEIGHT, DINO_WIDTH , DINO_HEIGHT, 1);
-    int a = 150;
+    double a = 150;
     for(int u = 0 ; u <= DINO_WIDTH*5 && a > 0; u++){
-        color(r, a*c[4*p+3].r/255, a*c[4*p+3].g/255, a*c[4*p+3].b/255, 0);
+        color(r, (255 - a)*c[4*p+3].r/255, (255 - a)*c[4*p+3].g/255, (255 - a)*c[4*p+3].b/255, 0);
         triangle(r, x, y, x, y - DINO_HEIGHT, x-u, yy - DINO_HEIGHT/2, 0);
-        a--;
+        a-= 0.8;
     } 
 
 
