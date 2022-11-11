@@ -45,7 +45,7 @@ void openSDL(int x, int y, int mode, SDL_Window**w, SDL_Renderer**r);
 void closeSDL(SDL_Window**w, SDL_Renderer**r);
 void background(SDL_Renderer* r, Color*c, int p);
 void drawLandscape(SDL_Renderer* r, Color*c, int p);
-void drawDino(SDL_Renderer* r, double x, double y, Color*c, int p);//x and y values relates to the left bottom corner of the "dino"
+void drawDino(SDL_Renderer* r, double x, double y, Color*c, int p, int yy);//x and y values relates to the left bottom corner of the "dino"
 void updateDinoPosition(double*x, double*y, double*vy, double*ay);
 void drawBulbs(SDL_Renderer* r, bulb *bulb, Color*c, int p);
 void moveBulbs(bulb *bulb, int tc);
@@ -159,6 +159,7 @@ int main(int argc, char *args[]){//compile and execute with     gcc main.c -o ma
     int super_jump = 0; // 0 if super jump is avaible ; otherwise it's a timer
     int survived = 0;
     int last_survived = 0;
+    int p_y = 3*HEIGHT/4;
 
     restartGame(bulbs, &d_x, &d_y, &d_vy, &d_ay, &tick_count, &palette);
 
@@ -179,7 +180,7 @@ int main(int argc, char *args[]){//compile and execute with     gcc main.c -o ma
                 superJumpBar(ren, super_jump, colors, palette);
 
 
-                drawDino(ren, d_x, d_y, colors, palette);
+                drawDino(ren, d_x, d_y, colors, palette, p_y);
 
                 /*color(ren, 255, 0, 0, 255);
                 mark(ren, 80, 160, 5);*/
@@ -238,7 +239,8 @@ int main(int argc, char *args[]){//compile and execute with     gcc main.c -o ma
         }
 
         
-
+        if(abs(p_y - d_y) > 2)
+            p_y = d_y;
         tick_count++;
         if(super_jump)
             super_jump--;
@@ -386,9 +388,18 @@ void drawLandscape(SDL_Renderer* r, Color*c, int p){
     
 }
 
-void drawDino(SDL_Renderer* r, double x, double y, Color*c, int p){
+void drawDino(SDL_Renderer* r, double x, double y, Color*c, int p, int yy){
     color(r, c[4*p].r, c[4*p].g, c[4*p].b, 255);
     rect(r, x, y - DINO_HEIGHT, DINO_WIDTH , DINO_HEIGHT, 1);
+    int a = 150;
+    for(int u = 0 ; u <= DINO_WIDTH*5 && a > 0; u++){
+        color(r, a*c[4*p+3].r/255, a*c[4*p+3].g/255, a*c[4*p+3].b/255, 0);
+        triangle(r, x, y, x, y - DINO_HEIGHT, x-u, yy - DINO_HEIGHT/2, 0);
+        a--;
+    } 
+
+
+
 }
 
 void updateDinoPosition(double*x, double*y, double*vy, double*ay){
