@@ -13,6 +13,7 @@
 #define ACCELERATION 180
 #define BULBS_NUMBER 4
 #define SUPER_JUMP_TIMER 100
+#define FRAMES_PER_SECOND 40
 
 
 
@@ -98,6 +99,13 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
 
                 SDL_RenderPresent(ren);//refresh the render
 
+            }else{
+                printf("you survived %d seconds\n", SDL_GetTicks()/1000);
+                SDL_Delay(2500);//4 sec to see the score
+                free(bulbs);
+                closeSDL(&w, &ren);
+                printf("closed successfully !\n");
+                return 0;
             }
 
 
@@ -148,7 +156,7 @@ int main(int argc, char *argv[]){//compile and execute with     gcc main.c -o ma
         tick_count++;
         if(super_jump)
             super_jump--;
-        SDL_Delay(33);//1000/30 = 33 this delay is for 30fps
+        SDL_Delay(1000/FRAMES_PER_SECOND);
 
     }
 
@@ -298,7 +306,7 @@ void updateDinoPosition(double*x, double*y, double*vy, double*ay){
 }
 
 void drawBulbs(SDL_Renderer* r, bulb *bulb){//!\ to draw the bulb before the background, otherwise the bulb will be a simple circle
-    color(r, 255, 0, 0, 255);
+    color(r, 50, 50, 50, 255);
     for(int b = 0 ; b < BULBS_NUMBER ; b ++){
         for(int i = bulb[b].r ; i >= bulb[b].r - 5 ; i--){//thicken the border of the bulb
             circle(r, bulb[b].x, bulb[b].y, i);
@@ -333,14 +341,16 @@ void moveBulbs(bulb *bulbs, int tc){//to upgrade : bulbs will go faster and fast
     //let's regenerate every died bulbs :
 
     srand(time(0));
-
+    int iteration_counter;
     for(int i = 0 ; i < BULBS_NUMBER ; i++){
         if(inTheGame[i] == 0){
+            iteration_counter = 0;//avoid too much calculations(that would kill the game)
             do
             {
                 bulbs[i].r = DINO_HEIGHT/2 + rand() % DINO_HEIGHT/2;
                 bulbs[i].x = WIDTH + rand() % WIDTH;                               //distance might be enought
-            } while (!distanceBeetweenWithOtherBulbsisLargerThan(bulbs[i], bulbs, DINO_WIDTH*3));
+                iteration_counter++;
+            } while (!distanceBeetweenWithOtherBulbsisLargerThan(bulbs[i], bulbs, DINO_WIDTH*3) && iteration_counter < 100);
             
         }
     }
@@ -385,15 +395,15 @@ double dist(double x1, double y1, double x2, double y2){
     return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
 }
 
-int died(bulb *bulbs, double x, double y){
+int died(bulb *bulbs, double x, double y){//there's a 1 pixel delta
     for(int b = 0 ; b < BULBS_NUMBER ; b++){
-        if(dist(x, y, bulbs[b].x, bulbs[b].y) < bulbs[b].r)//left down corner
+        if(dist(x, y, bulbs[b].x, bulbs[b].y) < bulbs[b].r - 1)//left down corner
             return 1;
-        if(dist(x + DINO_WIDTH, y, bulbs[b].x, bulbs[b].y) < bulbs[b].r)//right down corner
+        if(dist(x + DINO_WIDTH, y, bulbs[b].x, bulbs[b].y) < bulbs[b].r - 1)//right down corner
             return 1;
-        if(dist(x + DINO_WIDTH/3, y, bulbs[b].x, bulbs[b].y) < bulbs[b].r)//1/3
+        if(dist(x + DINO_WIDTH/3, y, bulbs[b].x, bulbs[b].y) < bulbs[b].r - 1)//1/3
             return 1;
-        if(dist(x + 2*DINO_WIDTH/3, y, bulbs[b].x, bulbs[b].y) < bulbs[b].r)//2/3
+        if(dist(x + 2*DINO_WIDTH/3, y, bulbs[b].x, bulbs[b].y) < bulbs[b].r - 1)//2/3
             return 1;
     }
     return 0;//no died
