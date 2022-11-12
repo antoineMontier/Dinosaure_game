@@ -61,7 +61,6 @@ int inTheTriangle(double x1, double y1, double x2, double y2, double x3, double 
 double min(double a, double b, double c);
 double max(double a, double b, double c);
 void triangle(SDL_Renderer* r, int x1, int y1, int x2, int y2, int x3, int y3, int filled);
-void triangle(SDL_Renderer* r, int x1, int y1, int x2, int y2, int x3, int y3, int filled);
 
 
 
