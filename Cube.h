@@ -1,5 +1,36 @@
 #include "SDL_Basics.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+
+
+#define DINO_WIDTH 40
+#define DINO_HEIGHT 40
+#define DINO_JUMP_POWER 20
+#define OBSTACLE_SPEED 15
+#define ACCELERATION 180
+#define BULBS_NUMBER 4
+#define SUPER_JUMP_TIMER 100
+#define FRAMES_PER_SECOND 36
+#define BUTTON_WIDTH 70
+#define BUTTON_HEIGHT 70
+#define PALETTE 4
+
+
+
+typedef struct{
+    double x;//center down of the bulb
+    double y;//center down of the bulb
+    double r;//height of the bulb
+}bulb;
+
+typedef struct{
+    unsigned int r;//red 0-255
+    unsigned int g;//green 0-255
+    unsigned int b;//blue 0-255
+}Color;
 
 
 void drawLandscape(SDL_Renderer* r, Color*c, int p);
